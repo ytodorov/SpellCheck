@@ -71,7 +71,8 @@ namespace SpellCheckMeOnlineWeb.Controllers
             string html = Server.HtmlDecode(htmlEncoded);
 
             var testForClearText = StripTagsCharArray(html);
-
+            // ?? test
+            text = testForClearText;
 
             var chars = text.ToCharArray();
             List<string> emptyChars = new List<string>();
@@ -82,13 +83,18 @@ namespace SpellCheckMeOnlineWeb.Controllers
                     emptyChars.Add(c.ToString());
                 }
             }
-            var alphabetChars = SpellEngineManager.AlphabetLetters[langugage];
-            var nonAlphabetChars = chars.Distinct().Except(alphabetChars).ToList();
+            emptyChars = emptyChars.Distinct().ToList();
 
-            foreach (var nonAlpha in nonAlphabetChars)
-            {
-                text = text.Replace(nonAlpha.ToString(), " ");
-            }
+            var alphabetChars = SpellEngineManager.AlphabetLetters[langugage];
+
+            //var punctuationChars = chars.Where(c => char.IsPunctuation(c)).Distinct().ToList();
+            var nonAlphabetChars = chars.Distinct().Except(alphabetChars).ToList();
+            //var nonAlphabetChars = chars.Distinct().Except(alphabetChars).Except(punctuationChars).ToList();
+
+            //for (int i = 0; i < punctuationChars.Count; i++)
+            //{
+            //    text = text.Replace(punctuationChars[i].ToString(), " ");
+            //}
 
             //var words = text.Replace("\n", " ").Replace(",", " ").Replace(".", " ").Split(emptyChars.ToArray(), StringSplitOptions.RemoveEmptyEntries).ToList();
             var words = text.Split(emptyChars.ToArray(), StringSplitOptions.RemoveEmptyEntries).ToList();
@@ -136,7 +142,7 @@ namespace SpellCheckMeOnlineWeb.Controllers
                    
                 }               
                 string suggestions = sb.ToString();
-                sbSummary.Append(CreateGridRow(word, suggestions));
+
 
                 //var wordsInHtml = html.Split(emptyChars.ToArray(), StringSplitOptions.None);
                 //StringBuilder newHtml = new StringBuilder();
@@ -155,11 +161,22 @@ namespace SpellCheckMeOnlineWeb.Controllers
 
                 //html = newHtml.ToString();
 
-                string input = html;
-                string pattern = $@"\b{word}\b";
-                string replace = $"<span title='{suggestions}' style='color:blueviolet;background-color:yellow'>{word}</span>";
-                html = Regex.Replace(input, pattern, replace);
-               
+                // заради Angstriom го правя това - съдържа не само букви
+                //if (word.ToCharArray().All(c => char.IsLetter(c)))
+                {
+
+                    string input = html;
+                    string pattern = $@"\b{word}\b";
+                    string replace = $"<span title='{suggestions}' style='color:blueviolet;background-color:yellow'>{word}</span>";
+                    var newhtml = Regex.Replace(input, pattern, replace);
+                    if (newhtml != html)
+                    {
+                        // за да няма в грида повече думи отколкото сме подчертали в editor
+                        sbSummary.Append(CreateGridRow(word, suggestions));
+                    }
+                    html = newhtml;
+                }
+
 
                 //html = html.Replace(word, $"<span title='{suggestions}' style='color:blueviolet;background-color:yellow'>{word}</span>");
             }

@@ -8,11 +8,42 @@
     <link rel="stylesheet" href="http://kendo.cdn.telerik.com/2016.1.226/styles/kendo.common-office365.min.css">
     <link rel="stylesheet" href="http://kendo.cdn.telerik.com/2016.1.226/styles/kendo.office365.min.css">
 
+    <style>
+        /*
+            Use the DejaVu Sans font for display and embedding in the PDF file.
+            The standard PDF fonts have no support for Unicode characters.
+        */
+        .k-grid {
+            font-family: "DejaVu Sans", "Arial", sans-serif;
+        }
+
+        /* Hide the Grid header and pager during export */
+        .k-pdf-export .k-grid-toolbar,
+        .k-pdf-export .k-pager-wrap {
+            display: none;
+        }
+    </style>
+
+  
+
+
     <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
     <script src="http://kendo.cdn.telerik.com/2016.1.112/js/jszip.min.js"></script>
     <script src="http://kendo.cdn.telerik.com/2016.1.226/js/kendo.all.min.js"></script>
 
     <script src="http://www.thefreedictionary.com/dict.js"></script>
+    <script>  
+        kendo.pdf.defineFont({
+            "DejaVu Sans": "http://kendo.cdn.telerik.com/2016.1.226/styles/fonts/DejaVu/DejaVuSans.ttf",
+            "DejaVu Sans|Bold": "http://kendo.cdn.telerik.com/2016.1.226/styles/fonts/DejaVu/DejaVuSans-Bold.ttf",
+            "DejaVu Sans|Bold|Italic": "http://kendo.cdn.telerik.com/2016.1.226/styles/fonts/DejaVu/DejaVuSans-Oblique.ttf",
+            "DejaVu Sans|Italic": "http://kendo.cdn.telerik.com/2016.1.226/styles/fonts/DejaVu/DejaVuSans-Oblique.ttf"
+        });
+    </script>
+
+    <!-- Load Pako ZLIB library to enable PDF compression -->
+    <script src="//kendo.cdn.telerik.com/2016.1.226/js/pako_deflate.min.js"></script>
+
 
     <meta name="description" content="Free Spell Check Grammar English Any Language" />
 </head>

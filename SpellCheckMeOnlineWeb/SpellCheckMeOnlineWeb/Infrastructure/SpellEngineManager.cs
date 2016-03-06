@@ -103,9 +103,13 @@ namespace SpellCheckMeOnlineWeb.Infrastructure
                 {
                     var textOnly = line.Substring(0, indexOfSlash);
                     sb.Append(textOnly);
-                }               
+                }            
+                if (line.Contains("Å"))
+                {
+
+                }
             }
-            var result = sb.ToString().ToCharArray().Distinct().OrderBy(c => c).ToList();
+            var result = sb.ToString().ToCharArray().Distinct().OrderBy(c => c).ToList(); // .Where(c => char.IsLetter(c)
             return result;
         }
     }
