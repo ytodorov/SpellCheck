@@ -1,0 +1,51 @@
+﻿
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+    }
+
+    body, html {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+</style>
+
+<input type="text" id="tb" />
+<input type="button" name="name" value="GO" id="btn" />
+
+
+<iframe id="if" sandbox="allow-scripts" src="https://www.omegasoft.bg/"></iframe>
+
+<script>
+    $(document).ready(function () {
+        $('#if').on('load', function () {
+
+            //var iframe = $("#if");
+            //iframe.contents().find('html').html(html);
+
+            //var visibleText = iframe.contents().find('html').children(":visible").not("script").text();
+            //console.log(visibleText);
+        });
+
+
+        $("#btn").click(function myfunction() {
+            debugger;
+
+            var val = $("#tb").val();
+            var $if = $("#if");
+            $if.attr("src", val);
+        });
+       
+    });
+  
+
+</script>

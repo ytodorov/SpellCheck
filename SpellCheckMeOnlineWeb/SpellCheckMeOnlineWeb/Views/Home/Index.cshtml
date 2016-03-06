@@ -1,0 +1,136 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+
+<base />
+
+<style>
+
+</style>
+<script id="template" type="text/x-kendo-template">
+    test
+    <p>#=target.data('title')#</p>
+</script>
+<input type="text" name="iframeUrl" id="iframeUrl" class="k-textbox" style="display:none"  />
+<input type="button" name="btnNavigate" id="btnNavigate" onclick="btnNavigate(); return false;" class="k-button" value="Spell Check" />
+<select id="language">
+    <option>en</option>
+    <option>bg</option>
+</select>
+<br />
+<textarea id="editor" rows="10" cols="30" style="width:100%;height:400px"></textarea>
+<div id="divSummary"></div>
+
+<script>
+    $(document).ready(() => {
+        $("#editor").kendoEditor({
+            tools: [
+               //"bold",
+               //"italic",
+               //"underline",
+               //"strikethrough",
+               //"justifyLeft",
+               //"justifyCenter",
+               //"justifyRight",
+               //"justifyFull",
+               //"insertUnorderedList",
+               //"insertOrderedList",
+               //"indent",
+               //"outdent",
+               //"createLink",
+               //"unlink",
+               //"insertImage",
+               //"insertFile",
+               //"subscript",
+               //"superscript",
+               //"createTable",
+               //"addRowAbove",
+               //"addRowBelow",
+               //"addColumnLeft",
+               //"addColumnRight",
+               //"deleteRow",
+               //"deleteColumn",
+               "viewHtml",
+               //"formatting",
+               //"cleanFormatting",
+               //"fontName",
+               //"fontSize",
+               //"foreColor",
+               //"backColor",
+               "print",
+               "pdf"
+            ],
+            resizable: {
+                content: true,
+                toolbar: true
+                //,                        encoded: false
+            }
+        });
+
+
+        $("#language").kendoDropDownList({ filter: "startswith", delay: 1 });
+    });
+</script>
+
+<script>
+
+    function htmlEncode(value) {
+        //create a in-memory div, set it's inner text(which jQuery automatically encodes)
+        //then grab the encoded contents back out.  The div never exists on the page.
+        return $('<div/>').text(value).html();
+    }
+
+    function htmlDecode(value) {
+        return $('<div/>').html(value).text();
+    }
+
+    function btnNavigate() {
+        var url = $("#iframeUrl").val();
+        sessionStorage.setItem('url', url);
+        $.ajax({
+            method: "GET",
+            url: document.location.origin + "/Home/GetHtml",
+            data: {
+                url: "https://www.google.bg/"
+            }
+        }).done(function (html) {
+            debugger;
+            var url = sessionStorage.getItem('url');
+            var editor = $("#editor").data("kendoEditor");
+            var visibleText = editor.value();
+            visibleText = $(visibleText).text();
+            var html = $('#editor').getKendoEditor().value();
+            var htmlEncoded = htmlEncode(html);
+            var text = html.replace(/(<([^>]+)>)/ig, "");
+            var dropdownlist = $("#language").data("kendoDropDownList");
+            var langugage = dropdownlist.value();
+            $.ajax({
+                method: "POST",
+                url: document.location.origin +
+                    "/Home/SpellText",
+                data: {
+                    htmlEncoded: htmlEncoded,
+                    text: text,
+                    langugage: langugage
+                }
+            }).done(function (result) {
+                var editor = $("#editor").data("kendoEditor");
+                debugger;
+                editor.value(result.html);
+                $("#divSummary").html(result.summary);
+                $("#grid").kendoGrid({
+                    toolbar: ["excel", "pdf"],
+                    sortable: true
+                });
+                //var head = $("iframe").contents().find("head");
+                //head.append('<link rel="stylesheet" href="http://kendo.cdn.telerik.com/2016.1.226/styles/kendo.common-office365.min.css">');
+                //head.append('<link rel="stylesheet" href="http://kendo.cdn.telerik.com/2016.1.226/styles/kendo.office365.min.css">');
+                //head.append('<script src="http://code.jquery.com/jquery-1.9.1.min.js"><//script>');
+                //head.append('<script src="http://kendo.cdn.telerik.com/2016.1.226/js/kendo.all.min.js"><//script>');
+                //var body = $("iframe").contents().find("body");
+                //body.append('<script>function targetFunction() { debugger; var tooltip = $("iframe").contents().find("#editorDiv").kendoTooltip({ filter: "span", width: 120, position: "top" }).data("kendoTooltip");  }; targetFunction();<\/script>');
+            });
+        });
+    };
+
+</script>

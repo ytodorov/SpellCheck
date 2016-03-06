@@ -1,0 +1,84 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+
+<base />
+<input type="text" name="iframeUrl" id="iframeUrl" class="k-textbox" />
+<input type="button" name="btnNavigate" id="btnNavigate" class="k-button" value="Go" />
+<select id="language">
+    <option>en</option>
+    <option>bg</option>
+</select>
+<br />
+<iframe id="mainIframe"></iframe>
+<script>
+    $(document).ready(() => {
+        $("#language").kendoDropDownList({ filter: "startswith", delay: 1 });
+        $("#btnNavigate").click(function () {
+            var url = $("#iframeUrl").val();
+            sessionStorage.setItem('url', url);
+
+            $.ajax({
+                method: "GET",
+                url: document.location.origin + "/Home/GetHtml",
+                data: { url: url }
+            })
+   .done(function (html) {
+       debugger;
+
+       var url = sessionStorage.getItem('url');
+
+
+
+       var iframe = $("#mainIframe");
+
+       try {
+           iframe.contents().find('html').html(html);
+       }
+       catch(err)
+       {
+           alert(err);
+       }
+
+       try
+       {
+           var visibleText = iframe.contents().find('html').children(":visible").not("script").text();
+       }catch(err)
+       {
+           alert(err);
+       }
+
+
+       var dropdownlist = $("#language").data("kendoDropDownList");
+       var langugage = dropdownlist.value();
+
+       $.ajax({
+           method: "POST",
+           url: document.location.origin + "/Home/SpellText",
+           data: { text: visibleText, langugage: langugage }
+       })
+.done(function (wrongWords) {
+    debugger;
+    var iframe = $("#mainIframe");
+    var htmlWithErrors = iframe.contents().find('html').html();
+    $.each(wrongWords, function (index, value) {
+        debugger;
+        var ex = new RegExp(value, "g");
+
+        htmlWithErrors = htmlWithErrors.replace(ex, "<strong>" + value + "</strong>");
+    });
+    iframe.contents().find('html').html(htmlWithErrors);
+
+
+});
+
+
+
+
+   });
+
+
+        });
+
+    });
+</script>

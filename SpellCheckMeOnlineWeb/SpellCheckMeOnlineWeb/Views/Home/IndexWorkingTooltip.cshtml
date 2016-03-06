@@ -1,0 +1,103 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+
+<base />
+
+<style>
+  
+</style>
+<script id="template" type="text/x-kendo-template">
+    test
+    <p>#=target.data('title')#</p>
+</script>
+<script src="http://www.thefreedictionary.com/dict.js"></script>
+<input type="text" name="iframeUrl" id="iframeUrl" class="k-textbox" />
+<input type="button" name="btnNavigate" id="btnNavigate" class="k-button" value="Go" />
+<select id="language">
+    <option>en</option>
+    <option>bg</option>
+</select>
+<br />
+<textarea id="editor" rows="10" cols="30" style="width:100%;height:400px"></textarea>
+
+    <script>
+        window.yordan = "yordan";
+
+        $(document).ready(() => {
+            $("#editor").kendoEditor({
+                tools: [
+                ]
+            });
+
+
+            $("#language").kendoDropDownList({ filter: "startswith", delay: 1 });
+            $("#btnNavigate").click(function () {
+                var url = $("#iframeUrl").val();
+                sessionStorage.setItem('url', url);
+
+                $.ajax({
+                    method: "GET",
+                    url: document.location.origin + "/Home/GetHtml",
+                    data: { url: "https://www.google.bg/" }
+                })
+       .done(function (html) {
+
+           var url = sessionStorage.getItem('url');
+           var editor = $("#editor").data("kendoEditor");
+           var visibleText ='<p>' +  editor.value() + '</p>';
+           var visibleText = $(visibleText).text();
+
+
+           var dropdownlist = $("#language").data("kendoDropDownList");
+           var langugage = dropdownlist.value();
+
+           $.ajax({
+               method: "POST",
+               url: document.location.origin + "/Home/SpellText",
+               data: { text: visibleText, langugage: langugage }
+           })
+    .done(function (correctText) {
+
+        var editor = $("#editor").data("kendoEditor");
+        editor.value("<div id='editorDiv'>" + correctText + "</div>");
+        debugger;
+
+        var head = $("iframe").contents().find("head");
+        head.append('<link rel="stylesheet" href="http://kendo.cdn.telerik.com/2016.1.226/styles/kendo.common-office365.min.css">');
+        head.append('<link rel="stylesheet" href="http://kendo.cdn.telerik.com/2016.1.226/styles/kendo.office365.min.css">');
+        head.append('<script src="http://code.jquery.com/jquery-1.9.1.min.js"><//script>');
+        head.append('<script src="http://kendo.cdn.telerik.com/2016.1.226/js/kendo.all.min.js"><//script>');
+        var body = $("iframe").contents().find("body");
+        body.append('<script>function targetFunction() { debugger; var tooltip = $("iframe").contents().find("#editorDiv").kendoTooltip({ filter: "span", width: 120, position: "top" }).data("kendoTooltip");  }; targetFunction();<\/script>');
+
+        //var iframe = $("iframe").contents().find("head");
+        //$("iframe").first()[0].contentWindow.targetFunction();
+
+    
+        //debugger;
+        //var editor = $("#editor").data("kendoEditor");
+        //var htmlWithErrors = editor.value();
+        //$.each(wrongWords, function (index, value) {
+        //    debugger;
+        //    var ex = new RegExp(value, "g");
+
+        //    htmlWithErrors = htmlWithErrors.replace(value, "<span style='color:blueviolet'>" + value + "</span>");
+        //});
+
+        //var editor = $("#editor").data("kendoEditor");
+        //editor.value(htmlWithErrors);
+
+
+    });
+
+
+
+
+       });
+
+
+            });
+
+        });
+    </script>
