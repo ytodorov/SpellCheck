@@ -3,11 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@ViewBag.Title - My ASP.NET Application</title>
-    @Styles.Render("~/Content/css")
-    @Scripts.Render("~/bundles/modernizr")
-    @Scripts.Render("~/bundles/jquery")
-
+    <title>@ViewBag.Title</title>
 
     <link rel="stylesheet" href="http://kendo.cdn.telerik.com/2016.1.226/styles/kendo.common-office365.min.css">
     <link rel="stylesheet" href="http://kendo.cdn.telerik.com/2016.1.226/styles/kendo.office365.min.css">
@@ -18,15 +14,9 @@
 
     <script src="http://www.thefreedictionary.com/dict.js"></script>
 
-    @Scripts.Render("~/bundles/bootstrap")
-    <meta name="description" content="The description of my page" />
+    <meta name="description" content="Free Spell Check Grammar English Any Language" />
 </head>
 <body ondblclick="dictionary()">
-
-
     @RenderBody()
-
-
-    @RenderSection("scripts", required: false)
 </body>
 </html>

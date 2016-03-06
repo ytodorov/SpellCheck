@@ -1,30 +1,19 @@
 ﻿@{
-    ViewBag.Title = "Home Page";
+    ViewBag.Title = "The Free Spell Check";
 }
-
-<base />
-
-<style>
-
-</style>
-<script id="template" type="text/x-kendo-template">
-    test
-    <p>#=target.data('title')#</p>
-</script>
-<input type="text" name="iframeUrl" id="iframeUrl" class="k-textbox" style="display:none" />
-
-
 <script type="text/x-kendo-template" id="backgroundColor-template">
     <select id="language">
-        <option>en</option>
-        <option>bg</option>
+        @foreach (string language in SpellCheckMeOnlineWeb.Infrastructure.SpellEngineManager.Languages)
+        {
+            <option>@language</option>
+        }
     </select>
 </script>
+
 <script type="text/x-kendo-template" id="templateButtonSpellCheck">
     <input type="button" name="btnNavigate" id="btnNavigate" onclick="btnNavigate(); return false;" class="k-button" value="Spell Check" />
 </script>
 
-<br />
 <textarea id="editor" rows="10" cols="30" style="width:100%;height:400px"></textarea>
 <div id="divSummary"></div>
 
@@ -119,8 +108,8 @@
             debugger;
             var url = sessionStorage.getItem('url');
             var editor = $("#editor").data("kendoEditor");
-            var visibleText = editor.value();
-            visibleText = $(visibleText).text();
+            //var visibleText = editor.value();
+            //visibleText = $(visibleText).text(); // Не това води до грешки като е грешен html-a
             var html = $('#editor').getKendoEditor().value();
             var htmlEncoded = htmlEncode(html);
             var text = html.replace(/(<([^>]+)>)/ig, "");
