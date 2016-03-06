@@ -78,10 +78,25 @@ namespace SpellCheckMeOnlineWeb.Controllers
                     emptyChars.Add(c.ToString());
                 }
             }
+            var alphabetChars = SpellEngineManager.AlphabetLetters[langugage].ToCharArray().ToList();
+            var nonAlphabetChars = chars.Distinct().Except(alphabetChars).ToList();
 
-            var words = text.Replace("\n", " ").Replace(",", " ").Replace(".", " ").Split(emptyChars.ToArray(), StringSplitOptions.RemoveEmptyEntries).ToList();
+            foreach (var nonAlpha in nonAlphabetChars)
+            {
+                text = text.Replace(nonAlpha.ToString(), " ");
+            }
+
+            //var words = text.Replace("\n", " ").Replace(",", " ").Replace(".", " ").Split(emptyChars.ToArray(), StringSplitOptions.RemoveEmptyEntries).ToList();
+            var words = text.Split(emptyChars.ToArray(), StringSplitOptions.RemoveEmptyEntries).ToList();
+
+
+
+            //var words = text.Replace("\n", " ").Replace(",", " ").Replace(".", " ").Split(emptyChars.ToArray(), StringSplitOptions.RemoveEmptyEntries).ToList();
             List<string> wrongWords = new List<string>();
-            words = words.Select(w => w.Trim()).Where(s => !string.IsNullOrWhiteSpace(s)).Where(w => ContainsLetters(w)).ToList();
+      
+            //words = words.Select(w => w.Trim()).Where(s => !string.IsNullOrWhiteSpace(s)).Where(w => ContainsLetters(w)).ToList();
+            words = words.Select(w => w.Trim()).Where(s => !string.IsNullOrWhiteSpace(s)).Where(w => ContainsOnlyAlphabetLetters(w, alphabetChars)).ToList();
+
             foreach (string word in words)
             {
                 var res = SpellEngineManager.SpellEngine[langugage].Spell(word);
@@ -141,6 +156,18 @@ namespace SpellCheckMeOnlineWeb.Controllers
                 }
             }
             return false;
+        }
+
+        bool ContainsOnlyAlphabetLetters(string wordToCheck, List<char> alphabetLetters)
+        {
+            List<char> wordChars = wordToCheck.ToCharArray().ToList();
+
+            if(alphabetLetters.Union(wordChars).Count() != alphabetLetters.Count)
+            {
+                return false;
+            }
+
+            return true;
         }
 
         string CreateGridRow(string word, string suggestion)
