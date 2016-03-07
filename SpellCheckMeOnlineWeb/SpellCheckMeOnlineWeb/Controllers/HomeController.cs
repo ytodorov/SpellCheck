@@ -37,6 +37,11 @@ namespace SpellCheckMeOnlineWeb.Controllers
 
         public ActionResult GetHtml(string url)
         {
+            if (string.IsNullOrEmpty(url))
+            {
+                return Json(string.Empty, JsonRequestBehavior.AllowGet);
+            }
+
             using (HttpClient httpClient = new HttpClient())
             {
                 string html = httpClient.GetStringAsync(url).Result;
@@ -69,6 +74,14 @@ namespace SpellCheckMeOnlineWeb.Controllers
         public ActionResult SpellText(string htmlEncoded, string text, string langugage)
         {            
             string html = Server.HtmlDecode(htmlEncoded);
+
+            //?? test
+            var indexOfBase = html.IndexOf("<base");
+            if (indexOfBase > 0)
+            {
+                html = html.Substring(indexOfBase);
+            }
+
 
             var testForClearText = StripTagsCharArray(html);
             // ?? test
