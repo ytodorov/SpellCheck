@@ -35,26 +35,37 @@ namespace SpellCheckMeOnlineWeb.Controllers
             return View();
         }
 
-        public ActionResult GetHtml(string url)
+        public ActionResult GetHtml(string urlString)
         {
-            if (string.IsNullOrEmpty(url))
+            if (string.IsNullOrEmpty(urlString))
             {
                 return Json(string.Empty, JsonRequestBehavior.AllowGet);
             }
+            Uri url = null;
+
+            try
+            {
+                url = new Uri(urlString);
+            }
+            catch (FormatException ex)
+            {
+                return Json(ex.Message);
+            }
+
+            string baseString = url.OriginalString.Replace(url.LocalPath, string.Empty) + "/";
+
 
             using (HttpClient httpClient = new HttpClient())
             {
-                string html = httpClient.GetStringAsync(url).Result;
+                string html = httpClient.GetStringAsync(urlString).Result;
 
                 //?
-                if (!url.EndsWith("/"))
+                if (!urlString.EndsWith("/"))
                 {
-                    url += "/";
+                    urlString += "/";
                 }
-                html = html.Replace("href=\"/", "href=\"" + url);
-                html = html.Replace("src=\"/", "src=\"" + url);
-
-                string urlBase = new Uri(url).OriginalString;
+                html = html.Replace("href=\"/", "href=\"" + baseString);
+                html = html.Replace("src=\"/", "src=\"" + baseString);
 
                 var indexOfHead = html.IndexOf("<head");
                 for (int i = indexOfHead; i < html.Length; i++)
@@ -67,12 +78,12 @@ namespace SpellCheckMeOnlineWeb.Controllers
                     }
                 }
 
-                html = html.Insert(indexOfHead + 1, "<base href='" + urlBase + "'>");
+                html = html.Insert(indexOfHead + 1, "<base href='" + baseString + "'>");
                 return Json(html, JsonRequestBehavior.AllowGet);
             }
         }
         public ActionResult SpellText(string htmlEncoded, string text, string langugage)
-        {            
+        {
             string html = Server.HtmlDecode(htmlEncoded);
 
             //?? test
@@ -116,7 +127,7 @@ namespace SpellCheckMeOnlineWeb.Controllers
 
             //var words = text.Replace("\n", " ").Replace(",", " ").Replace(".", " ").Split(emptyChars.ToArray(), StringSplitOptions.RemoveEmptyEntries).ToList();
             List<string> wrongWords = new List<string>();
-      
+
             //words = words.Select(w => w.Trim()).Where(s => !string.IsNullOrWhiteSpace(s)).Where(w => ContainsLetters(w)).ToList();
             words = words.Select(w => w.Trim()).Where(s => !string.IsNullOrWhiteSpace(s)).Where(w => ContainsOnlyAlphabetLetters(w, alphabetChars)).ToList();
 
@@ -152,8 +163,8 @@ namespace SpellCheckMeOnlineWeb.Controllers
                 foreach (var item in suggest)
                 {
                     sb.Append(item + ", ");
-                   
-                }               
+
+                }
                 string suggestions = sb.ToString();
 
 
@@ -217,7 +228,7 @@ namespace SpellCheckMeOnlineWeb.Controllers
         {
             List<char> wordChars = wordToCheck.ToCharArray().ToList();
 
-            if(alphabetLetters.Union(wordChars).Count() != alphabetLetters.Count)
+            if (alphabetLetters.Union(wordChars).Count() != alphabetLetters.Count)
             {
                 return false;
             }
@@ -232,7 +243,7 @@ namespace SpellCheckMeOnlineWeb.Controllers
                         <td>{suggestion}</td>
                             </tr>";
             return row;
-                        
+
         }
 
         public static string StripTagsCharArray(string source)
