@@ -1,6 +1,8 @@
-﻿using SpellCheckMeOnlineWeb.Infrastructure;
+﻿using NHunspell;
+using SpellCheckMeOnlineWeb.Infrastructure;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -52,7 +54,11 @@ namespace SpellCheckMeOnlineWeb.Controllers
                 return Json(ex.Message);
             }
 
-            string baseString = url.OriginalString.Replace(url.LocalPath, string.Empty) + "/";
+            string baseString = urlString;
+            if (url.LocalPath != "/")
+            {
+                baseString = url.OriginalString.Replace(url.LocalPath, string.Empty) + "/";
+            }
 
 
             using (HttpClient httpClient = new HttpClient())
@@ -84,65 +90,84 @@ namespace SpellCheckMeOnlineWeb.Controllers
         }
         public ActionResult SpellText(string htmlEncoded, string text, string langugage)
         {
-            string html = Server.HtmlDecode(htmlEncoded);
+            FileInfo affFile = SpellEngineManager.AllAffFiles.FirstOrDefault(f => f.Directory.Name.Equals(langugage, StringComparison.InvariantCultureIgnoreCase));
+            string nameWithoutExtension = affFile.Directory.Name.ToLower();// affFile.Name.Replace(".aff", string.Empty).ToLowerInvariant();
 
-            //?? test
-            var indexOfBase = html.IndexOf("<base");
-            if (indexOfBase > 0)
+            using (SpellEngine spellEngine = new SpellEngine())
             {
-                html = html.Substring(indexOfBase);
-            }
+                LanguageConfig enConfig = new LanguageConfig();
+                enConfig.LanguageCode = nameWithoutExtension;
+                enConfig.HunspellAffFile = affFile.FullName;
+                enConfig.HunspellDictFile = affFile.FullName.Replace(".aff", ".dic");
+                enConfig.HunspellKey = "";
+                spellEngine.AddLanguage(enConfig);
+                var alphabetCharsOld = SpellEngineManager.GetAlphabetLetters(enConfig.HunspellAffFile);
+                SpellEngineManager.AlphabetLetters[nameWithoutExtension] = alphabetCharsOld;
 
 
-            var testForClearText = StripTagsCharArray(html);
-            // ?? test
-            text = testForClearText;
 
-            var chars = text.ToCharArray();
-            List<string> emptyChars = new List<string>();
-            foreach (char c in chars)
-            {
-                if (string.IsNullOrWhiteSpace(c.ToString()))
+
+
+
+                string html = Server.HtmlDecode(htmlEncoded);
+
+                //?? test
+                var indexOfBase = html.IndexOf("<base");
+                if (indexOfBase > 0)
                 {
-                    emptyChars.Add(c.ToString());
+                    html = html.Substring(indexOfBase);
                 }
-            }
-            emptyChars = emptyChars.Distinct().ToList();
-
-            var alphabetChars = SpellEngineManager.AlphabetLetters[langugage];
-
-            //var punctuationChars = chars.Where(c => char.IsPunctuation(c)).Distinct().ToList();
-            var nonAlphabetChars = chars.Distinct().Except(alphabetChars).ToList();
-            //var nonAlphabetChars = chars.Distinct().Except(alphabetChars).Except(punctuationChars).ToList();
-
-            //for (int i = 0; i < punctuationChars.Count; i++)
-            //{
-            //    text = text.Replace(punctuationChars[i].ToString(), " ");
-            //}
-
-            //var words = text.Replace("\n", " ").Replace(",", " ").Replace(".", " ").Split(emptyChars.ToArray(), StringSplitOptions.RemoveEmptyEntries).ToList();
-            var words = text.Split(emptyChars.ToArray(), StringSplitOptions.RemoveEmptyEntries).ToList();
 
 
+                var testForClearText = StripTagsCharArray(html);
+                // ?? test
+                text = testForClearText;
 
-            //var words = text.Replace("\n", " ").Replace(",", " ").Replace(".", " ").Split(emptyChars.ToArray(), StringSplitOptions.RemoveEmptyEntries).ToList();
-            List<string> wrongWords = new List<string>();
-
-            //words = words.Select(w => w.Trim()).Where(s => !string.IsNullOrWhiteSpace(s)).Where(w => ContainsLetters(w)).ToList();
-            words = words.Select(w => w.Trim()).Where(s => !string.IsNullOrWhiteSpace(s)).Where(w => ContainsOnlyAlphabetLetters(w, alphabetChars)).ToList();
-
-            foreach (string word in words)
-            {
-                var res = SpellEngineManager.SpellEngine[langugage].Spell(word);
-                if (!res)
+                var chars = text.ToCharArray();
+                List<string> emptyChars = new List<string>();
+                foreach (char c in chars)
                 {
-                    wrongWords.Add(word);
+                    if (string.IsNullOrWhiteSpace(c.ToString()))
+                    {
+                        emptyChars.Add(c.ToString());
+                    }
                 }
-            }
-            wrongWords = wrongWords.Distinct().ToList();
+                emptyChars = emptyChars.Distinct().ToList();
 
-            StringBuilder sbSummary = new StringBuilder();
-            string begin = @"  <table id='grid'>
+                var alphabetChars = SpellEngineManager.AlphabetLetters[langugage];
+
+                //var punctuationChars = chars.Where(c => char.IsPunctuation(c)).Distinct().ToList();
+                var nonAlphabetChars = chars.Distinct().Except(alphabetChars).ToList();
+                //var nonAlphabetChars = chars.Distinct().Except(alphabetChars).Except(punctuationChars).ToList();
+
+                //for (int i = 0; i < punctuationChars.Count; i++)
+                //{
+                //    text = text.Replace(punctuationChars[i].ToString(), " ");
+                //}
+
+                //var words = text.Replace("\n", " ").Replace(",", " ").Replace(".", " ").Split(emptyChars.ToArray(), StringSplitOptions.RemoveEmptyEntries).ToList();
+                var words = text.Split(emptyChars.ToArray(), StringSplitOptions.RemoveEmptyEntries).ToList();
+
+
+
+                //var words = text.Replace("\n", " ").Replace(",", " ").Replace(".", " ").Split(emptyChars.ToArray(), StringSplitOptions.RemoveEmptyEntries).ToList();
+                List<string> wrongWords = new List<string>();
+
+                //words = words.Select(w => w.Trim()).Where(s => !string.IsNullOrWhiteSpace(s)).Where(w => ContainsLetters(w)).ToList();
+                words = words.Select(w => w.Trim()).Where(s => !string.IsNullOrWhiteSpace(s)).Where(w => ContainsOnlyAlphabetLetters(w, alphabetChars)).ToList();
+
+                foreach (string word in words)
+                {
+                    var res = spellEngine[langugage].Spell(word);
+                    if (!res)
+                    {
+                        wrongWords.Add(word);
+                    }
+                }
+                wrongWords = wrongWords.Distinct().ToList();
+
+                StringBuilder sbSummary = new StringBuilder();
+                string begin = @"  <table id='grid'>
                 <colgroup>
                     <col />
                     <col />                    
@@ -154,61 +179,62 @@ namespace SpellCheckMeOnlineWeb.Controllers
                     </tr>
                 </thead>
                 <tbody>";
-            sbSummary.Append(begin);
+                sbSummary.Append(begin);
 
-            foreach (string word in wrongWords)
-            {
-                var suggest = SpellEngineManager.SpellEngine[langugage].Suggest(word);
-                StringBuilder sb = new StringBuilder();
-                foreach (var item in suggest)
+                foreach (string word in wrongWords)
                 {
-                    sb.Append(item + ", ");
-
-                }
-                string suggestions = sb.ToString();
-
-
-                //var wordsInHtml = html.Split(emptyChars.ToArray(), StringSplitOptions.None);
-                //StringBuilder newHtml = new StringBuilder();
-                //for (int i = 0; i < wordsInHtml.Count(); i++)
-                //{
-                //    var currWord = wordsInHtml[i];
-                //    if (currWord.Trim() == word.Trim())
-                //    {
-                //        newHtml.Append($"<span title='{suggestions}' style='color:blueviolet;background-color:yellow'>{word}</span>");
-                //    }
-                //    else
-                //    {
-                //        newHtml.Append(currWord);
-                //    }
-                //}
-
-                //html = newHtml.ToString();
-
-                // заради Angstriom го правя това - съдържа не само букви
-                //if (word.ToCharArray().All(c => char.IsLetter(c)))
-                {
-
-                    string input = html;
-                    string pattern = $@"\b{word}\b";
-                    string replace = $"<span title='{suggestions}' style='color:blueviolet;background-color:yellow'>{word}</span>";
-                    var newhtml = Regex.Replace(input, pattern, replace);
-                    if (newhtml != html)
+                    var suggest = spellEngine[langugage].Suggest(word);
+                    StringBuilder sb = new StringBuilder();
+                    foreach (var item in suggest)
                     {
-                        // за да няма в грида повече думи отколкото сме подчертали в editor
-                        sbSummary.Append(CreateGridRow(word, suggestions));
+                        sb.Append(item + ", ");
+
                     }
-                    html = newhtml;
+                    string suggestions = sb.ToString();
+
+
+                    //var wordsInHtml = html.Split(emptyChars.ToArray(), StringSplitOptions.None);
+                    //StringBuilder newHtml = new StringBuilder();
+                    //for (int i = 0; i < wordsInHtml.Count(); i++)
+                    //{
+                    //    var currWord = wordsInHtml[i];
+                    //    if (currWord.Trim() == word.Trim())
+                    //    {
+                    //        newHtml.Append($"<span title='{suggestions}' style='color:blueviolet;background-color:yellow'>{word}</span>");
+                    //    }
+                    //    else
+                    //    {
+                    //        newHtml.Append(currWord);
+                    //    }
+                    //}
+
+                    //html = newHtml.ToString();
+
+                    // заради Angstriom го правя това - съдържа не само букви
+                    //if (word.ToCharArray().All(c => char.IsLetter(c)))
+                    {
+
+                        string input = html;
+                        string pattern = $@"\b{word}\b";
+                        string replace = $"<span title='{suggestions}' style='color:blueviolet;background-color:yellow'>{word}</span>";
+                        var newhtml = Regex.Replace(input, pattern, replace);
+                        if (newhtml != html)
+                        {
+                            // за да няма в грида повече думи отколкото сме подчертали в editor
+                            sbSummary.Append(CreateGridRow(word, suggestions));
+                        }
+                        html = newhtml;
+                    }
+
+
+                    //html = html.Replace(word, $"<span title='{suggestions}' style='color:blueviolet;background-color:yellow'>{word}</span>");
                 }
 
+                sbSummary.Append("</tbody></table>");
 
-                //html = html.Replace(word, $"<span title='{suggestions}' style='color:blueviolet;background-color:yellow'>{word}</span>");
+                var returnObject = new { html = html + "<div></div>", summary = sbSummary.ToString() };
+                return Json(returnObject);
             }
-
-            sbSummary.Append("</tbody></table>");
-
-            var returnObject = new { html = html + "<div></div>", summary = sbSummary.ToString() };
-            return Json(returnObject);
         }
 
         bool ContainsLetters(string wordToCheck)
