@@ -1,4 +1,5 @@
-﻿using NHunspell;
+﻿using HtmlAgilityPack;
+using NHunspell;
 using SpellCheckMeOnlineWeb.Infrastructure;
 using System;
 using System.Collections.Generic;
@@ -12,6 +13,7 @@ using System.Web.Mvc;
 
 namespace SpellCheckMeOnlineWeb.Controllers
 {
+    [ValidateInput(false)]
     public class HomeController : Controller
     {
         public ActionResult Index()
@@ -39,10 +41,18 @@ namespace SpellCheckMeOnlineWeb.Controllers
 
         public ActionResult GetHtml(string urlString)
         {
+
+
             if (string.IsNullOrEmpty(urlString))
             {
                 return Json(string.Empty, JsonRequestBehavior.AllowGet);
             }
+
+            if (!urlString.EndsWith("/"))
+            {
+                urlString += "/";
+            }
+
             Uri url = null;
 
             try
@@ -111,12 +121,23 @@ namespace SpellCheckMeOnlineWeb.Controllers
 
                 string html = Server.HtmlDecode(htmlEncoded);
 
+                //HtmlDocument doc = new HtmlDocument();
+                //doc.LoadHtml(html);
+                ////doc.Save(Console.Out); // show before 
+                //RemoveComments(doc.DocumentNode);
+                //var test = doc.DocumentNode.InnerHtml;
+                              
+
+
                 //?? test
-                var indexOfBase = html.IndexOf("<base");
-                if (indexOfBase > 0)
-                {
-                    html = html.Substring(indexOfBase);
-                }
+                //var indexOfBase = html.IndexOf("<base");
+                //if (indexOfBase > 0)
+                //{
+                //    html = html.Substring(indexOfBase);
+                //    html = html.Replace("</body>", string.Empty);
+                //    html = html.Replace("</html>", string.Empty);
+                   
+                //}
 
 
                 var testForClearText = StripTagsCharArray(html);
@@ -270,6 +291,23 @@ namespace SpellCheckMeOnlineWeb.Controllers
                             </tr>";
             return row;
 
+        }
+
+        static void RemoveComments(HtmlNode node)
+        {
+            if (node.NodeType == HtmlNodeType.Comment)
+            {
+                node.ParentNode.RemoveChild(node);
+                return;
+            }
+
+            if (!node.HasChildNodes)
+                return;
+
+            foreach (HtmlNode subNode in node.ChildNodes)
+            {
+                RemoveComments(subNode);
+            }
         }
 
         public static string StripTagsCharArray(string source)
